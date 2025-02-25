@@ -33,6 +33,14 @@ cd proxet
 go build -o proxet main.go
 ```
 
+You can run the app from anywhere by running:
+
+```sh
+go build && go install
+```
+
+from the project directory.
+
 ## Usage
 
 To use Proxet, run the following commands:
