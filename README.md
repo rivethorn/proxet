@@ -6,6 +6,7 @@
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [Introduction](#introduction)
 - [Features](#features)
 - [Installation](#installation)
@@ -21,6 +22,7 @@ Proxet is a simple command-line tool designed to change Fish shell environment v
 
 - Set a custom proxy address
 - Reset proxy settings
+- Check to see if the proxy has been set
 - Simple and easy-to-use CLI
 
 ## Installation
@@ -55,6 +57,12 @@ To use Proxet, run the following commands:
 
 ```sh
 ./proxet -r
+```
+
+- Check proxy settings:
+
+```sh
+./proxet -c
 ```
 
 ## Contributing
