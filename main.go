@@ -19,6 +19,7 @@ import (
 var Reset = "\033[0m"
 var Red = "\033[31m"
 var Green = "\033[32m"
+var Yellow = "\033[33m"
 
 // Path to the Fish shell configuration file
 var configPath = os.ExpandEnv("$HOME/.config/fish/config.fish")
@@ -58,6 +59,11 @@ func main() {
 
 // setProxy sets the proxy address in the Fish shell configuration file
 func setProxy(address string) {
+	if isProxySet() {
+		fmt.Println(Yellow + "Proxy is already set" + Reset)
+		return
+	}
+
 	file, err := os.OpenFile(configPath, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println(Red+"Couldn't open fish config file:", err, Reset)
@@ -66,7 +72,8 @@ func setProxy(address string) {
 	defer file.Close()
 
 	// Add proxy settings to the configuration file
-	add := fmt.Sprintf(`set -gx http_proxy "%s"
+	add := fmt.Sprintf(`
+set -gx http_proxy "%s"
 set -gx https_proxy "%s"
 set -gx ftp_proxy "%s"
 set -gx all_proxy "%s"
@@ -87,6 +94,11 @@ set -gx no_proxy "%s"`, address, address, address, address, address)
 
 // resetProxy removes the proxy settings from the Fish shell configuration file
 func resetProxy() error {
+	if !isProxySet() {
+		fmt.Println(Yellow + "No proxy settings to reset" + Reset)
+		return nil
+	}
+
 	file, err := os.Open(configPath)
 	if err != nil {
 		return err
@@ -96,18 +108,16 @@ func resetProxy() error {
 	var lines []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+		line := scanner.Text()
+		// Skip lines that contain proxy settings
+		if strings.Contains(line, "_proxy") {
+			continue
+		}
+		lines = append(lines, line)
 	}
 	if err := scanner.Err(); err != nil {
 		return err
 	}
-
-	// Remove the last 5 lines which contain the proxy settings
-	newLength := len(lines) - 5
-	if newLength < 0 {
-		newLength = 0
-	}
-	lines = lines[:newLength]
 
 	file, err = os.OpenFile(configPath, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
@@ -116,8 +126,14 @@ func resetProxy() error {
 	defer file.Close()
 
 	writer := bufio.NewWriter(file)
-	for _, line := range lines {
-		_, err := writer.WriteString(line + "\n")
+	for i, line := range lines {
+		if i > 0 {
+			_, err := writer.WriteString("\n")
+			if err != nil {
+				return err
+			}
+		}
+		_, err := writer.WriteString(line)
 		if err != nil {
 			return err
 		}
