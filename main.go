@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // ANSI color codes for terminal output
@@ -39,10 +40,20 @@ func main() {
 		setProxy(os.Args[2])
 		return
 	}
+	// If the argument is -c, check if the proxy is set
+	if len(os.Args) > 1 && os.Args[1] == "-c" {
+		if isProxySet() {
+			fmt.Println(Green + "Proxy is set" + Reset)
+		} else {
+			fmt.Println(Red + "Proxy is not set" + Reset)
+		}
+		return
+	}
 	// If no arguments are provided, print the usage
 	fmt.Println("Usage:")
 	fmt.Println("proxet -a <proxy_address> to set the proxy")
 	fmt.Println("proxet -r to reset the proxy settings")
+	fmt.Println("proxet -c to check if the proxy is set")
 }
 
 // setProxy sets the proxy address in the Fish shell configuration file
@@ -119,6 +130,31 @@ func resetProxy() error {
 
 	fmt.Println(Green + "Proxy settings reset!" + Reset)
 	return writer.Flush()
+}
+
+// isProxySet checks if the proxy is set in the Fish shell configuration file
+func isProxySet() bool {
+	file, err := os.Open(configPath)
+	if err != nil {
+		fmt.Println(Red+"Couldn't open fish config file:", err, Reset)
+		return false
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "http_proxy") || strings.Contains(line, "https_proxy") ||
+			strings.Contains(line, "ftp_proxy") || strings.Contains(line, "all_proxy") ||
+			strings.Contains(line, "no_proxy") {
+			return true
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Println(Red+"Error reading fish config file:", err, Reset)
+		return false
+	}
+	return false
 }
 
 // sourceConfig sources the Fish shell configuration file to apply changes
