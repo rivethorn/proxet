@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,6 +14,35 @@ var Reset = "\033[0m"
 var Red = "\033[31m"
 var Green = "\033[32m"
 var Yellow = "\033[33m"
+
+// checkShell to run the proper functions
+func checkShell() (string, error) {
+	// Check the current shell the user is using
+	currentShellCmd := exec.Command("ps", "-p", fmt.Sprintf("%d", os.Getppid()), "-o", "comm=")
+	currentShellOutput, err := currentShellCmd.Output()
+	if err != nil {
+		return "", errors.New("failed to determine current shell: " + err.Error())
+	}
+	currentShell := strings.TrimSpace(string(currentShellOutput))
+
+	// Check the system shell from the SHELL environment variable
+	systemShell := os.Getenv("SHELL")
+	if systemShell == "" {
+		return "", errors.New("SHELL environment variable is not set")
+	}
+	fmt.Println(Green+"Shell type:", currentShell+Reset)
+
+	// Determine if either the current shell or system shell is supported
+	if strings.Contains(systemShell, "fish") && strings.Contains(currentShell, "fish") {
+		return "fish", nil
+	} else if strings.Contains(systemShell, "bash") && strings.Contains(currentShell, "bash") {
+		return "bash", nil
+	} else if strings.Contains(systemShell, "zsh") && strings.Contains(currentShell, "zsh") {
+		return "zsh", nil
+	} else {
+		return "", errors.New("unsupported shell: current shell (" + currentShell + "), system shell (" + systemShell + ")")
+	}
+}
 
 // Path to the Fish shell configuration file
 var configPath = os.ExpandEnv("$HOME/.config/fish/config.fish")

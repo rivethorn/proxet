@@ -13,6 +13,14 @@ import (
 )
 
 func main() {
+	// Check the shell type before proceeding
+	shell, err := checkShell()
+	if err != nil {
+		fmt.Println(Red+"Error checking shell:", err, Reset)
+		return
+	}
+	fmt.Println(Green+"Shell type:", shell, Reset)
+
 	// Check if the argument is -r, reset the proxy settings
 	if len(os.Args) > 1 && os.Args[1] == "-r" {
 		if err := resetProxy(); err != nil {
