@@ -4,7 +4,12 @@ void main(List<String> args) {
   if (args.isNotEmpty) {
     switch (args[0]) {
       case '-r':
-        resetProxy();
+        if (!isProxySet()) {
+          print("\x1B[33mProxy is already reset\x1B[0m");
+          return;
+        } else {
+          resetProxy();
+        }
         return;
       case '-a':
         if (args.length < 2) {
